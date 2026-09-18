@@ -1,0 +1,55 @@
+name: Build Superman ASI
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare project folders
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path "src"
+          New-Item -ItemType Directory -Force -Path "SDK\inc"
+          New-Item -ItemType Directory -Force -Path "SDK\lib"
+
+          Copy-Item "main.cpp" "src\main.cpp" -Force
+          Copy-Item "controller.cpp" "src\controller.cpp" -Force
+          Copy-Item "script.cpp" "src\script.cpp" -Force
+          Copy-Item "controller.h" "src\controller.h" -Force
+          Copy-Item "script.h" "src\script.h" -Force
+
+          Copy-Item "main.h" "SDK\inc\main.h" -Force
+          Copy-Item "nativeCaller.h" "SDK\inc\nativeCaller.h" -Force
+          Copy-Item "natives.h" "SDK\inc\natives.h" -Force
+          Copy-Item "types.h" "SDK\inc\types.h" -Force
+          Copy-Item "enums.h" "SDK\inc\enums.h" -Force
+          Copy-Item "ScriptHookV.lib" "SDK\lib\ScriptHookV.lib" -Force
+
+      - name: Build x64 ASI
+        shell: cmd
+        run: |
+          call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          msbuild Superman.vcxproj /p:Configuration=Release /p:Platform=x64 /m
+
+      - name: Check output
+        shell: powershell
+        run: |
+          if (!(Test-Path "build\Superman.asi")) {
+            Write-Error "Superman.asi was not created."
+            exit 1
+          }
+          Get-Item "build\Superman.asi"
+
+      - name: Upload Superman.asi
+        uses: actions/upload-artifact@v4
+        with:
+          name: Superman-GTA5-Legacy-3889
+          path: build\Superman.asi
+          if-no-files-found: error
