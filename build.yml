@@ -1,0 +1,31 @@
+name: Build Superman ASI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract project
+        shell: pwsh
+        run: |
+          Expand-Archive -Path "Superman-project.zip" -DestinationPath "project" -Force
+
+      - name: Build Win32 Release
+        shell: cmd
+        run: |
+          call "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath > vs_path.txt
+          set /p VSINSTALL=<vs_path.txt
+          call "%VSINSTALL%\VC\Auxiliary\Build\vcvars32.bat"
+          msbuild "project\Superman.vcxproj" /p:Configuration=Release /p:Platform=Win32 /m
+
+      - name: Upload Superman.asi
+        uses: actions/upload-artifact@v4
+        with:
+          name: Superman-GTA5-Legacy-3889
+          path: project\build\Superman.asi
+          if-no-files-found: error
