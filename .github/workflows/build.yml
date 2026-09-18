@@ -32,10 +32,24 @@ jobs:
           Copy-Item "enums.h" "SDK\inc\enums.h" -Force
           Copy-Item "ScriptHookV.lib" "SDK\lib\ScriptHookV.lib" -Force
 
+      - name: Find Visual Studio
+        shell: powershell
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+
+          if (-not $vs) {
+            Write-Error "Visual Studio C++ build tools were not found."
+            exit 1
+          }
+
+          "VSINSTALL=$vs" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "Visual Studio: $vs"
+
       - name: Build x64 ASI
         shell: cmd
         run: |
-          call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          call "%VSINSTALL%\VC\Auxiliary\Build\vcvars64.bat"
           msbuild Superman.vcxproj /p:Configuration=Release /p:Platform=x64 /m
 
       - name: Check output
@@ -45,6 +59,7 @@ jobs:
             Write-Error "Superman.asi was not created."
             exit 1
           }
+
           Get-Item "build\Superman.asi"
 
       - name: Upload Superman.asi
