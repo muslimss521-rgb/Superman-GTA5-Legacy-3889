@@ -7,22 +7,20 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Extract project
         shell: powershell
-        run: |
-          Expand-Archive -Path "Superman-project.zip" -DestinationPath "project" -Force
+        run: Expand-Archive -Path "Superman-project.zip" -DestinationPath "project" -Force
 
-      - name: Build Win32 ASI
+      - name: Build x64 ASI
         shell: cmd
         run: |
-          call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+          call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           cd project
-          msbuild Superman.vcxproj /p:Configuration=Release /p:Platform=Win32 /m
+          msbuild Superman.vcxproj /p:Configuration=Release /p:Platform=x64 /m
 
       - name: Upload Superman.asi
         uses: actions/upload-artifact@v4
