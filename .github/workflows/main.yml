@@ -23,10 +23,20 @@ jobs:
           msbuild-architecture: x64
 
       - name: Build ASI
-        shell: cmd
+        shell: powershell
         run: |
-          cd project
-          msbuild Superman.vcxproj /p:Configuration=Release /p:Platform=x64 /m
+          $vcxproj = Get-ChildItem -Path "$env:GITHUB_WORKSPACE\project" -Filter "Superman.vcxproj" -File -Recurse | Select-Object -First 1
+
+          if (-not $vcxproj) {
+            Write-Host "Superman.vcxproj not found!"
+            Get-ChildItem -Path "$env:GITHUB_WORKSPACE\project" -Recurse | Select-Object FullName
+            exit 1
+          }
+
+          Write-Host "Found project:"
+          Write-Host $vcxproj.FullName
+
+          msbuild $vcxproj.FullName /p:Configuration=Release /p:Platform=x64 /m
 
       - name: Check output
         shell: powershell
